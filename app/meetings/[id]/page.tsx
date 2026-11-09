@@ -12,11 +12,15 @@ export default async function MeetingPage({
   params,
 }: MeetingPageProps) {
   const { id } = await params;
+const baseUrl =
+  process.env.NEXT_PUBLIC_BASE_URL ??
+  (process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : "http://localhost:3000");
 
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"}/api/meetings/${id}`,
-    { cache: "no-store" }
-  );
+const response = await fetch(`${baseUrl}/api/meetings/${id}`, {
+  cache: "no-store",
+});
 
   if (response.status === 400 || response.status === 404) {
     notFound();

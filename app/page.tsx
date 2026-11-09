@@ -4,10 +4,15 @@ import type { SacramentMeeting } from "@/lib/types";
 import Image from "next/image";
 
 export default async function MeetingsPage() {
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000"}/api/meetings`,
-    { cache: "no-store" }
-  );
+  const baseUrl =
+  process.env.NEXT_PUBLIC_BASE_URL ??
+  (process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : "http://localhost:3000");
+
+const response = await fetch(`${baseUrl}/api/meetings`, {
+  cache: "no-store",
+});
 
   if (!response.ok) {
     throw new Error("Failed to fetch meetings");

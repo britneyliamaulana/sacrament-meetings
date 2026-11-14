@@ -41,7 +41,7 @@ const response = await fetch(
             Scheduled Meetings
           </h2>
 
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-700">
             {meetings.length} meetings scheduled
           </p>
         </div>
@@ -53,7 +53,7 @@ const response = await fetch(
             ))}
           </div>
         ) : (
-          <p className="rounded-lg bg-gray-50 p-8 text-center text-gray-500">
+          <p className="rounded-lg bg-gray-50 p-8 text-center text-gray-700">
             No meetings have been scheduled yet.
           </p>
         )}

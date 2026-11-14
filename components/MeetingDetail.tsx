@@ -68,7 +68,7 @@ export default function MeetingDetail({
               ))}
             </ul>
           ) : (
-            <p className="text-gray-500">No ward business.</p>
+            <p className="text-gray-700">No ward business.</p>
           )}
         </div>
 
@@ -93,14 +93,14 @@ export default function MeetingDetail({
                 <li key={index}>
                   <p className="font-medium">{item.name}</p>
                   <p className="text-gray-600">{item.topic}</p>
-                  <p className="text-sm capitalize text-gray-500">
+                  <p className="text-sm capitalize text-gray-700">
                     {item.type.replace("-", " ")}
                   </p>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-gray-500">No speakers scheduled.</p>
+            <p className="text-gray-700">No speakers scheduled.</p>
           )}
         </div>
 

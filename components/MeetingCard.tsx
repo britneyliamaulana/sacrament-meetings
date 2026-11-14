@@ -24,7 +24,7 @@ export default function MeetingCard({ meeting }: MeetingCardProps) {
             {formattedDate}
           </h2>
 
-          <p className="text-sm text-gray-500 mt-1 capitalize">
+          <p className="text-sm text-gray-700 mt-1 capitalize">
             {meeting.meetingType} Meeting
           </p>
         </div>

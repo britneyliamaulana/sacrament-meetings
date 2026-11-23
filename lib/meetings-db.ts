@@ -122,19 +122,123 @@ export async function getMeetingById(
 }
 
 // Mutation stubs — implemented in Week 04
+
+// Add a new meeting
 export async function addMeeting(
   data: Omit<SacramentMeeting, 'id'>
 ): Promise<SacramentMeeting> {
-  throw new Error('addMeeting: database implementation coming in Week 04');
+  const rows = await sql`
+    INSERT INTO meetings (
+      date,
+      meeting_type,
+      presiding,
+      conducting,
+      announcements,
+      opening_hymn,
+      opening_prayer,
+      ward_business,
+      stake_business,
+      sacrament_hymn,
+      speakers,
+      closing_hymn,
+      closing_prayer
+    )
+    VALUES (
+      ${data.date}::date,
+      ${data.meetingType},
+      ${data.presiding},
+      ${data.conducting},
+      ${JSON.stringify(data.announcements ?? [])}::jsonb,
+      ${JSON.stringify(data.openingHymn)}::jsonb,
+      ${data.openingPrayer},
+      ${JSON.stringify(data.wardBusiness ?? [])}::jsonb,
+      ${data.stakeBusiness},
+      ${JSON.stringify(data.sacramentHymn)}::jsonb,
+      ${JSON.stringify(data.speakers ?? [])}::jsonb,
+      ${JSON.stringify(data.closingHymn)}::jsonb,
+      ${data.closingPrayer}
+    )
+    RETURNING
+      id,
+      to_char(date, 'YYYY-MM-DD') AS "date",
+      meeting_type AS "meetingType",
+      presiding,
+      conducting,
+      announcements,
+      opening_hymn AS "openingHymn",
+      opening_prayer AS "openingPrayer",
+      ward_business AS "wardBusiness",
+      stake_business AS "stakeBusiness",
+      sacrament_hymn AS "sacramentHymn",
+      speakers,
+      closing_hymn AS "closingHymn",
+      closing_prayer AS "closingPrayer"
+  `;
+
+  return rows[0] as unknown as SacramentMeeting;
 }
 
+// Update an existing meeting
 export async function updateMeeting(
   id: number,
   updates: Partial<SacramentMeeting>
 ): Promise<SacramentMeeting | null> {
-  throw new Error('updateMeeting: database implementation coming in Week 04');
+  const existingMeeting = await getMeetingById(id);
+
+  if (!existingMeeting) {
+    return null;
+  }
+
+  const data = {
+    ...existingMeeting,
+    ...updates,
+  };
+
+  const rows = await sql`
+    UPDATE meetings
+    SET
+      date = ${data.date}::date,
+      meeting_type = ${data.meetingType},
+      presiding = ${data.presiding},
+      conducting = ${data.conducting},
+      announcements = ${JSON.stringify(data.announcements ?? [])}::jsonb,
+      opening_hymn = ${JSON.stringify(data.openingHymn)}::jsonb,
+      opening_prayer = ${data.openingPrayer},
+      ward_business = ${JSON.stringify(data.wardBusiness ?? [])}::jsonb,
+      stake_business = ${data.stakeBusiness},
+      sacrament_hymn = ${JSON.stringify(data.sacramentHymn)}::jsonb,
+      speakers = ${JSON.stringify(data.speakers ?? [])}::jsonb,
+      closing_hymn = ${JSON.stringify(data.closingHymn)}::jsonb,
+      closing_prayer = ${data.closingPrayer}
+    WHERE id = ${id}
+    RETURNING
+      id,
+      to_char(date, 'YYYY-MM-DD') AS "date",
+      meeting_type AS "meetingType",
+      presiding,
+      conducting,
+      announcements,
+      opening_hymn AS "openingHymn",
+      opening_prayer AS "openingPrayer",
+      ward_business AS "wardBusiness",
+      stake_business AS "stakeBusiness",
+      sacrament_hymn AS "sacramentHymn",
+      speakers,
+      closing_hymn AS "closingHymn",
+      closing_prayer AS "closingPrayer"
+  `;
+
+  return (rows[0] as unknown as SacramentMeeting) ?? null;
 }
 
+// Delete a meeting
 export async function deleteMeeting(id: number): Promise<boolean> {
-  throw new Error('deleteMeeting: database implementation coming in Week 04');
+  const rows = await sql`
+    DELETE FROM meetings
+    WHERE id = ${id}
+    RETURNING id
+  `;
+
+  return rows.length > 0;
 }
+

@@ -1,36 +1,92 @@
 
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import type { MeetingType } from "@/lib/types";
+import { useActionState, useState } from "react";
+import {
+  createMeeting,
+  updateMeeting,
+  type MeetingFormState,
+} from "@/lib/actions";
+import type { MeetingType, SacramentMeeting } from "@/lib/types";
 
-export default function MeetingForm() {
-  const router = useRouter();
+const initialState: MeetingFormState = {
+  message: "",
+};
 
-  const [date, setDate] = useState("");
-  const [meetingType, setMeetingType] =
-    useState<MeetingType>("regular");
-  const [presiding, setPresiding] = useState("");
-  const [conducting, setConducting] = useState("");
+function getFieldError(
+  errors: MeetingFormState["errors"],
+  field: string
+) {
+  return errors?.[field]?.[0];
+}
 
-  const [openingHymnNumber, setOpeningHymnNumber] = useState("");
-  const [openingHymnTitle, setOpeningHymnTitle] = useState("");
-  const [openingPrayer, setOpeningPrayer] = useState("");
+interface MeetingFormProps {
+  meeting?: SacramentMeeting;
+}
 
-  const [sacramentHymnNumber, setSacramentHymnNumber] = useState("");
-  const [sacramentHymnTitle, setSacramentHymnTitle] = useState("");
+export default function MeetingForm({ meeting }: MeetingFormProps) {
+  const action = meeting
+    ? updateMeeting.bind(null, meeting.id)
+    : createMeeting;
 
-  const [closingHymnNumber, setClosingHymnNumber] = useState("");
-  const [closingHymnTitle, setClosingHymnTitle] = useState("");
-  const [closingPrayer, setClosingPrayer] = useState("");
+  const [state, formAction, isPending] = useActionState(
+    action,
+    initialState
+  );
 
-  const [announcements, setAnnouncements] = useState<string[]>([""]);
-  const [wardBusiness, setWardBusiness] = useState<string[]>([""]);
-  const [stakeBusiness, setStakeBusiness] = useState(false);
-  const [speakers, setSpeakers] = useState([
-  { name: "", topic: "", type: "speaker" as "speaker" | "musical-number" },
-]);
+  const [date, setDate] = useState(meeting?.date ?? "");
+  const [meetingType, setMeetingType] = useState<MeetingType>(
+    meeting?.meetingType ?? "regular"
+  );
+  const [presiding, setPresiding] = useState(meeting?.presiding ?? "");
+  const [conducting, setConducting] = useState(meeting?.conducting ?? "");
+
+  const [openingHymnNumber, setOpeningHymnNumber] = useState(
+    meeting ? String(meeting.openingHymn.number) : ""
+  );
+  const [openingHymnTitle, setOpeningHymnTitle] = useState(
+  meeting?.openingHymn.title ?? ""
+);
+  const [openingPrayer, setOpeningPrayer] = useState(
+    meeting?.openingPrayer ?? ""
+  );
+
+  const [sacramentHymnNumber, setSacramentHymnNumber] = useState(
+    meeting ? String(meeting.sacramentHymn.number) : ""
+  );
+  const [sacramentHymnTitle, setSacramentHymnTitle] = useState(
+    meeting?.sacramentHymn.title ?? ""
+  );
+
+  const [closingHymnNumber, setClosingHymnNumber] = useState(
+    meeting ? String(meeting.closingHymn.number) : ""
+  );
+  const [closingHymnTitle, setClosingHymnTitle] = useState(
+    meeting?.closingHymn.title ?? ""
+  );
+  const [closingPrayer, setClosingPrayer] = useState(
+    meeting?.closingPrayer ?? ""
+  );
+
+  const [announcements, setAnnouncements] = useState<string[]>(
+    meeting?.announcements?.length ? meeting.announcements : [""]
+  );
+
+  const [wardBusiness, setWardBusiness] = useState<string[]>(
+    meeting?.wardBusiness.length
+      ? meeting.wardBusiness.map((item) => item.description)
+      : [""]
+  );
+
+  const [stakeBusiness, setStakeBusiness] = useState(
+    meeting?.stakeBusiness ?? false
+  );
+
+  const [speakers, setSpeakers] = useState(
+    meeting?.speakers.length
+      ? meeting.speakers
+      : [{ name: "", topic: "", type: "speaker" as const }]
+  );
 
 function updateAnnouncement(index: number, value: string) {
   setAnnouncements((current) =>
@@ -38,9 +94,6 @@ function updateAnnouncement(index: number, value: string) {
   );
 }
 
-function addAnnouncement() {
-  setAnnouncements((current) => [...current, ""]);
-}
 
 function updateWardBusiness(index: number, value: string) {
   setWardBusiness((current) =>
@@ -71,81 +124,71 @@ function addSpeaker() {
   ]);
 }
 
-async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-  event.preventDefault();
+const meetingDetails = {
+  date,
+  meetingType,
+  presiding,
+  conducting,
 
-  const meetingDetails = {
-    date,
-    meetingType,
-    presiding,
-    conducting,
+  announcements: announcements.filter(
+    (item) => item.trim() !== ""
+  ),
 
-    announcements: announcements.filter(
-      (item) => item.trim() !== ""
-    ),
+  openingHymn: {
+    number: Number(openingHymnNumber),
+    title: openingHymnTitle,
+  },
+  openingPrayer,
 
-    openingHymn: {
-      number: Number(openingHymnNumber),
-      title: openingHymnTitle,
-    },
-    openingPrayer,
+  wardBusiness: wardBusiness
+    .filter((item) => item.trim() !== "")
+    .map((description) => ({ description })),
 
-    wardBusiness: wardBusiness
-      .filter((item) => item.trim() !== "")
-      .map((description) => ({ description })),
+  stakeBusiness,
 
-    stakeBusiness,
+  sacramentHymn: {
+    number: Number(sacramentHymnNumber),
+    title: sacramentHymnTitle,
+  },
 
-    sacramentHymn: {
-      number: Number(sacramentHymnNumber),
-      title: sacramentHymnTitle,
-    },
-
-    speakers: speakers.filter(
+  speakers: speakers.filter(
     (speaker) => speaker.name.trim() !== ""
-    ),
+  ),
 
-    closingHymn: {
-      number: Number(closingHymnNumber),
-      title: closingHymnTitle,
-    },
-    closingPrayer,
-  };
-
- try {
-  const response = await fetch("/api/meetings", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(meetingDetails),
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to create meeting");
-  }
-
-  const newMeeting = await response.json();
-
-  router.push(`/meetings/${newMeeting.id}`);
-} catch (error) {
-  console.error("Error creating meeting:", error);
-  alert("Something went wrong while creating the meeting.");
-}
-}
+  closingHymn: {
+    number: Number(closingHymnNumber),
+    title: closingHymnTitle,
+  },
+  closingPrayer,
+};
 
   return (
     <form
-      onSubmit={handleSubmit}
-      className="mx-auto max-w-2xl space-y-8 rounded-xl bg-white p-8 shadow-md"
-    >
+  action={formAction}
+  className="mx-auto max-w-2xl space-y-8 rounded-xl bg-white p-8 shadow-md"
+>
+  <input
+    type="hidden"
+    name="meetingData"
+    value={JSON.stringify(meetingDetails)}
+  />
+
+  <div aria-live="polite" className="text-sm text-red-700">
+    {state.message}
+    {state.errors &&
+      Object.values(state.errors).flat().map((error, index) => (
+        <p key={index}>{error}</p>
+      ))}
+  </div>
       <div>
-        <h1 className="text-2xl font-bold text-blue-950">
-          Create New Meeting
-        </h1>
-        <p className="mt-2 text-sm text-gray-600">
-          Enter the details for your sacrament meeting.
-        </p>
+      <h1 className="text-2xl font-bold text-blue-950">
+       {meeting ? "Edit Meeting" : "Create New Meeting"}
+    </h1>
+      <p className="mt-2 text-sm text-gray-600">
+        {meeting
+        ? "Update the details for this sacrament meeting."
+        : "Enter the details for your sacrament meeting."}
+      </p>
       </div>
 
       <section className="space-y-4">
@@ -157,14 +200,22 @@ async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
           <label htmlFor="date" className="mb-2 block font-medium">
             Meeting Date
           </label>
-          <input
-            id="date"
-            type="date"
-            value={date}
-            onChange={(event) => setDate(event.target.value)}
-            required
-            className="w-full rounded-lg border border-gray-300 p-3"
-          />
+         <input
+  id="date"
+  type="date"
+  value={date}
+  onChange={(event) => setDate(event.target.value)}
+  required
+  aria-invalid={!!getFieldError(state.errors, "date")}
+  aria-describedby="date-error"
+  className="w-full rounded-lg border border-gray-300 p-3"
+/>
+
+{getFieldError(state.errors, "date") && (
+  <p id="date-error" className="mt-1 text-sm text-red-700">
+    {getFieldError(state.errors, "date")}
+  </p>
+)}
         </div>
 
         <div>
@@ -191,14 +242,22 @@ async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
             Presiding
           </label>
           <input
-            id="presiding"
-            type="text"
-            value={presiding}
-            onChange={(event) => setPresiding(event.target.value)}
-            required
-            placeholder="Enter presiding officer"
-            className="w-full rounded-lg border border-gray-300 p-3"
-          />
+  id="presiding"
+  type="text"
+  value={presiding}
+  onChange={(event) => setPresiding(event.target.value)}
+  required
+  placeholder="Enter presiding officer"
+  aria-invalid={!!getFieldError(state.errors, "presiding")}
+  aria-describedby="presiding-error"
+  className="w-full rounded-lg border border-gray-300 p-3"
+/>
+
+{getFieldError(state.errors, "presiding") && (
+  <p id="presiding-error" className="mt-1 text-sm text-red-700">
+    {getFieldError(state.errors, "presiding")}
+  </p>
+)}
         </div>
 
         <div>
@@ -206,14 +265,22 @@ async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
             Conducting
           </label>
           <input
-            id="conducting"
-            type="text"
-            value={conducting}
-            onChange={(event) => setConducting(event.target.value)}
-            required
-            placeholder="Enter conducting officer"
-            className="w-full rounded-lg border border-gray-300 p-3"
-          />
+  id="conducting"
+  type="text"
+  value={conducting}
+  onChange={(event) => setConducting(event.target.value)}
+  required
+  placeholder="Enter conducting officer"
+  aria-invalid={!!getFieldError(state.errors, "conducting")}
+  aria-describedby="conducting-error"
+  className="w-full rounded-lg border border-gray-300 p-3"
+/>
+
+{getFieldError(state.errors, "conducting") && (
+  <p id="conducting-error" className="mt-1 text-sm text-red-700">
+    {getFieldError(state.errors, "conducting")}
+  </p>
+)}
         </div>
       </section>
 
@@ -243,14 +310,6 @@ async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
       />
     </div>
   ))}
-
-  <button
-    type="button"
-    onClick={addAnnouncement}
-    className="text-sm font-semibold text-blue-900 hover:underline"
-  >
-    + Add another announcement
-  </button>
 </section>
 
 <section className="space-y-4">
@@ -319,22 +378,44 @@ async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
               onChange={(event) => setOpeningHymnNumber(event.target.value)}
               required
               className="w-full rounded-lg border border-gray-300 p-3"
+              aria-invalid={!!getFieldError(state.errors, "openingHymn.number")}
+              aria-describedby="opening-hymn-number-error"
             />
+            {getFieldError(state.errors, "openingHymn.number") && (
+             <p id="opening-hymn-number-error" className="mt-1 text-sm text-red-700">
+              {getFieldError(state.errors, "openingHymn.number")}
+              </p>
+            )}
+
           </div>
 
           <div>
-            <label htmlFor="openingHymnTitle" className="mb-2 block font-medium">
+            <label htmlFor="" className="mb-2 block font-medium">
               Opening Hymn Title
             </label>
-            <input
-              id="openingHymnTitle"
-              type="text"
-              value={openingHymnTitle}
-              onChange={(event) => setOpeningHymnTitle(event.target.value)}
-              required
-              placeholder="Hymn title"
-              className="w-full rounded-lg border border-gray-300 p-3"
-            />
+           <div>
+  <label htmlFor="openingHymnTitle" className="mb-2 block font-medium">
+    Opening Hymn Title
+  </label>
+
+  <input
+    id="openingHymnTitle"
+    type="text"
+    value={openingHymnTitle}
+    onChange={(event) => setOpeningHymnTitle(event.target.value)}
+    required
+    placeholder="Hymn title"
+    className="w-full rounded-lg border border-gray-300 p-3"
+    aria-invalid={!!getFieldError(state.errors, "openingHymn.title")}
+    aria-describedby="opening-hymn-title-error"
+  />
+
+  {getFieldError(state.errors, "openingHymn.title") && (
+    <p id="opening-hymn-title-error" className="mt-1 text-sm text-red-700">
+      {getFieldError(state.errors, "openingHymn.title")}
+    </p>
+  )}
+</div>
           </div>
         </div>
 
@@ -342,15 +423,29 @@ async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
           <label htmlFor="openingPrayer" className="mb-2 block font-medium">
             Opening Prayer
           </label>
-          <input
-            id="openingPrayer"
-            type="text"
-            value={openingPrayer}
-            onChange={(event) => setOpeningPrayer(event.target.value)}
-            required
-            placeholder="Name of person giving the prayer"
-            className="w-full rounded-lg border border-gray-300 p-3"
-          />
+          <div>
+  <label htmlFor="openingPrayer" className="mb-2 block font-medium">
+    Opening Prayer
+  </label>
+
+  <input
+    id="openingPrayer"
+    type="text"
+    value={openingPrayer}
+    onChange={(event) => setOpeningPrayer(event.target.value)}
+    required
+    placeholder="Name of person giving the prayer"
+    className="w-full rounded-lg border border-gray-300 p-3"
+    aria-invalid={!!getFieldError(state.errors, "openingPrayer")}
+    aria-describedby="opening-prayer-error"
+  />
+
+  {getFieldError(state.errors, "openingPrayer") && (
+    <p id="opening-prayer-error" className="mt-1 text-sm text-red-700">
+      {getFieldError(state.errors, "openingPrayer")}
+    </p>
+  )}
+</div>
         </div>
       </section>
 
@@ -372,7 +467,14 @@ async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
               onChange={(event) => setSacramentHymnNumber(event.target.value)}
               required
               className="w-full rounded-lg border border-gray-300 p-3"
+              aria-invalid={!!getFieldError(state.errors, "sacramentHymn.number")}
+              aria-describedby="sacrament-hymn-number-error"
             />
+            {getFieldError(state.errors, "sacramentHymn.number") && (
+              <p id="sacrament-hymn-number-error" className="mt-1 text-sm text-red-700">
+                {getFieldError(state.errors, "sacramentHymn.number")}
+              </p>
+            )}
           </div>
 
           <div>
@@ -387,7 +489,14 @@ async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
               required
               placeholder="Hymn title"
               className="w-full rounded-lg border border-gray-300 p-3"
+              aria-invalid={!!getFieldError(state.errors, "sacramentHymn.title")}
+              aria-describedby="sacrament-hymn-title-error"
             />
+            {getFieldError(state.errors, "sacramentHymn.title") && (
+              <p id="sacrament-hymn-title-error" className="mt-1 text-sm text-red-700">
+                {getFieldError(state.errors, "sacramentHymn.title")}
+              </p>
+            )}
           </div>
         </div>
       </section>
@@ -414,15 +523,26 @@ async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
           Name
         </label>
         <input
-          id={`speaker-name-${index}`}
-          type="text"
-          value={speaker.name}
-          onChange={(event) =>
-            updateSpeaker(index, "name", event.target.value)
-          }
-          placeholder="Enter speaker or group name"
-          className="w-full rounded-lg border border-gray-300 p-3"
-        />
+  id={`speaker-name-${index}`}
+  type="text"
+  value={speaker.name}
+  onChange={(event) =>
+    updateSpeaker(index, "name", event.target.value)
+  }
+  placeholder="Enter speaker or group name"
+  className="w-full rounded-lg border border-gray-300 p-3"
+  aria-invalid={!!getFieldError(state.errors, `speakers.${index}.name`)}
+  aria-describedby={`speaker-name-error-${index}`}
+/>
+
+{getFieldError(state.errors, `speakers.${index}.name`) && (
+  <p
+    id={`speaker-name-error-${index}`}
+    className="mt-1 text-sm text-red-700"
+  >
+    {getFieldError(state.errors, `speakers.${index}.name`)}
+  </p>
+)}
       </div>
 
       <div>
@@ -481,59 +601,92 @@ async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
         </h2>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label htmlFor="closingHymnNumber" className="mb-2 block font-medium">
-              Closing Hymn Number
-            </label>
-            <input
-              id="closingHymnNumber"
-              type="number"
-              min="1"
-              value={closingHymnNumber}
-              onChange={(event) => setClosingHymnNumber(event.target.value)}
-              required
-              className="w-full rounded-lg border border-gray-300 p-3"
-            />
-          </div>
+  <div>
+    <label htmlFor="closingHymnNumber" className="mb-2 block font-medium">
+      Closing Hymn Number
+    </label>
 
-          <div>
-            <label htmlFor="closingHymnTitle" className="mb-2 block font-medium">
-              Closing Hymn Title
-            </label>
-            <input
-              id="closingHymnTitle"
-              type="text"
-              value={closingHymnTitle}
-              onChange={(event) => setClosingHymnTitle(event.target.value)}
-              required
-              placeholder="Hymn title"
-              className="w-full rounded-lg border border-gray-300 p-3"
-            />
-          </div>
-        </div>
+    <input
+      id="closingHymnNumber"
+      type="number"
+      min="1"
+      value={closingHymnNumber}
+      onChange={(event) => setClosingHymnNumber(event.target.value)}
+      required
+      className="w-full rounded-lg border border-gray-300 p-3"
+      aria-invalid={!!getFieldError(state.errors, "closingHymn.number")}
+      aria-describedby="closing-hymn-number-error"
+    />
 
-        <div>
-          <label htmlFor="closingPrayer" className="mb-2 block font-medium">
-            Closing Prayer
-          </label>
-          <input
-            id="closingPrayer"
-            type="text"
-            value={closingPrayer}
-            onChange={(event) => setClosingPrayer(event.target.value)}
-            required
-            placeholder="Name of person giving the prayer"
-            className="w-full rounded-lg border border-gray-300 p-3"
-          />
-        </div>
+    {getFieldError(state.errors, "closingHymn.number") && (
+      <p id="closing-hymn-number-error" className="mt-1 text-sm text-red-700">
+        {getFieldError(state.errors, "closingHymn.number")}
+      </p>
+    )}
+  </div>
+
+  <div>
+    <label htmlFor="closingHymnTitle" className="mb-2 block font-medium">
+      Closing Hymn Title
+    </label>
+
+    <input
+      id="closingHymnTitle"
+      type="text"
+      value={closingHymnTitle}
+      onChange={(event) => setClosingHymnTitle(event.target.value)}
+      required
+      placeholder="Hymn title"
+      className="w-full rounded-lg border border-gray-300 p-3"
+      aria-invalid={!!getFieldError(state.errors, "closingHymn.title")}
+      aria-describedby="closing-hymn-title-error"
+    />
+
+    {getFieldError(state.errors, "closingHymn.title") && (
+      <p id="closing-hymn-title-error" className="mt-1 text-sm text-red-700">
+        {getFieldError(state.errors, "closingHymn.title")}
+      </p>
+    )}
+  </div>
+</div>
+
+<div>
+  <label htmlFor="closingPrayer" className="mb-2 block font-medium">
+    Closing Prayer
+  </label>
+
+  <input
+    id="closingPrayer"
+    type="text"
+    value={closingPrayer}
+    onChange={(event) => setClosingPrayer(event.target.value)}
+    required
+    placeholder="Name of person giving the prayer"
+    className="w-full rounded-lg border border-gray-300 p-3"
+    aria-invalid={!!getFieldError(state.errors, "closingPrayer")}
+    aria-describedby="closing-prayer-error"
+  />
+
+  {getFieldError(state.errors, "closingPrayer") && (
+    <p id="closing-prayer-error" className="mt-1 text-sm text-red-700">
+      {getFieldError(state.errors, "closingPrayer")}
+    </p>
+  )}
+</div>
+       
       </section>
 
       <button
-        type="submit"
-        className="w-full rounded-lg bg-blue-950 px-6 py-3 font-semibold text-white hover:bg-blue-800"
-      >
-        Save Meeting
-      </button>
+  type="submit"
+  disabled={isPending}
+  className="w-full rounded-lg bg-blue-950 px-6 py-3 font-semibold text-white hover:bg-blue-800 disabled:opacity-50"
+>
+  {isPending
+    ? "Saving Meeting..."
+    : meeting
+      ? "Update Meeting"
+      : "Save Meeting"}
+</button>
     </form>
   );
 }

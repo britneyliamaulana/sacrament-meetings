@@ -1,5 +1,7 @@
 import type { SacramentMeeting } from "@/lib/types";
 import PrintButton from "@/components/PrintButton";
+import Link from "next/link";
+
 
 type MeetingDetailProps = {
   meeting: SacramentMeeting;
@@ -10,8 +12,15 @@ export default function MeetingDetail({
 }: MeetingDetailProps) {
   return (
     <article className="mx-auto max-w-3xl rounded-lg bg-white p-6 shadow-md">
-      <div className="mb-6 flex justify-end">
-    <PrintButton />
+      <div className="mb-6 flex justify-between">
+  <Link
+  href={`/meetings/${meeting.id}/edit`}
+  className="rounded-lg bg-blue-950 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-800"
+>
+  Edit Meeting
+</Link>
+
+  <PrintButton />
     </div>
       <header className="mb-6 border-b pb-4 text-center">
         <h1 className="text-3xl font-bold text-blue-950">

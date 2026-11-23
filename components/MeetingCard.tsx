@@ -1,6 +1,6 @@
-
-import Link from 'next/link';
-import type { SacramentMeeting } from '@/lib/types';
+import Link from "next/link";
+import type { SacramentMeeting } from "@/lib/types";
+import DeleteMeetingForm from "@/components/DeleteMeetingForm";
 
 interface MeetingCardProps {
   meeting: SacramentMeeting;
@@ -54,6 +54,7 @@ export default function MeetingCard({ meeting }: MeetingCardProps) {
       >
         View Meeting Program →
       </Link>
+      <DeleteMeetingForm meetingId={meeting.id} />
     </article>
   );
 }
